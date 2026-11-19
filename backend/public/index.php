@@ -2,14 +2,12 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 
 require_once __DIR__ . '/../src/Config/database.php';
-//get the env variables
-?>
 
+use App\Models\InfoPoint;
 
-    <!-- testing -->
+$infoPointModel = new InfoPoint($conn);
+$infoPoints = $infoPointModel->getAll();
 
-    <p>Database Name: <?php echo $dbName; ?></p>
-    <p>Database User: <?php echo $dbUser; ?></p>
-    <p>Database Password: <?php echo $dbPass; ?></p>
-    <p>Database Root Password: <?php echo $dbRootPass; ?></p>   
+header('Content-Type: application/json');
+echo json_encode($infoPoints);
 
