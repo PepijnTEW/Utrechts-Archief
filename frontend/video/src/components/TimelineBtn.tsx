@@ -16,7 +16,7 @@ export default function TimelineBtn({direction, onClick}: TimelineBtnProps) {
 
     return (
         <button 
-            className="flex h-12 w-20 items-center justify-center rounded-xl bg-white shadow-xl border-2 border-btn-border"
+            className="flex h-12 w-20 items-center justify-center rounded-xl bg-white shadow-xl border-3 border-btn-border"
             type="button"
             onClick={onClick}
         >
