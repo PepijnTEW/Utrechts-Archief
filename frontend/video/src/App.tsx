@@ -11,23 +11,24 @@ export default function App() {
 
 
   const handleButtonPress = (btnType: BtnType) => {
-    if (btnType === "back") {
+    const video = videoRef.current;
+    if (!video) return;
 
-    } else if (btnType === "forward") {
-
-    } else if (videoRef.current) {
-      if (videoRef.current.paused) {
-        void videoRef.current.play();
-        setStatus("play");
-      } else {
-        videoRef.current.pause();
-        setStatus("pause");
-      }
+    if (btnType === "forward"){
+      video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 10);
+    } else if ( btnType === "back"){
+      video.currentTime = Math.max(0, video.currentTime - 10);
+    } else if (video.paused) {
+      void video.play();
+      setStatus("play");
+    } else {
+      video.pause();
+      setStatus("pause");
     }
   }
 
   return (
-    <div className=" h-svh w-full overflow-hidden">
+    <div className="h-svh w-full overflow-hidden">
       <div className="relative h-full inline-block overflow-hidden">
         <video ref={videoRef} className="block h-full" loop autoPlay playsInline>
           <source src={GrachtVideo} type="video/mp4"/>
