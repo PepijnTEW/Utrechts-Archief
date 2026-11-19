@@ -1,3 +1,5 @@
+import PlayPauseBtn from "./components/PlayPauseBtn";
+import TimelineBtn from "./components/TimelineBtn";
 import GrachtVideo from "./assets/gracht.mp4"
 
 export default function App() {
@@ -7,7 +9,10 @@ export default function App() {
         <video className="block h-full" loop autoPlay playsInline>
           <source src={GrachtVideo} type="video/mp4"/>
         </video>
-        <div className="absolute inset-0 z-10">
+        <div className="bg-white absolute inset-x-0 bottom-0 z-10 flex items-end justify-between p-4">
+          <TimelineBtn direction="back"/>
+          <PlayPauseBtn status="play"/>
+          <TimelineBtn direction="forward"/>
         </div>
       </div>
     </div>
