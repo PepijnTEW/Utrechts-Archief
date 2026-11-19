@@ -1,1 +1,4 @@
 @import "tailwindcss";
+@theme {
+    --color-btn-border: rgba(1, 0, 68, 0.5)
+}
