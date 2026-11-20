@@ -15,7 +15,7 @@ export default function PlayPauseBtn({status, onToggle}: PlayPauseBtnProps) {
 
     return (
         <button 
-            className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-xl border-2 border-btn-border"
+            className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-xl border-3 border-btn-border"
             onClick={onToggle}
             type="button"
         >
