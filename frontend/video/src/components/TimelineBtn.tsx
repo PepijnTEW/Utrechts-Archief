@@ -16,7 +16,7 @@ export default function TimelineBtn({direction, onClick}: TimelineBtnProps) {
 
     return (
         <button
-            className="flex h-14 w-16 touch-manipulation items-center justify-center rounded-2xl bg-none text-white transition duration-300 active:scale-95  active:bg-amber-300/70 sm:h-16 sm:w-20"
+            className="flex h-14 w-16 touch-manipulation items-center justify-center rounded-2xl border-3 border-btn-border bg-none text-white transition duration-300 active:scale-95 active:bg-amber-300/70 sm:h-16 sm:w-20"
             type="button"
             onClick={onClick}
             aria-label={isBack ? "Rewind 10 seconds" : "Forward 10 seconds"}
