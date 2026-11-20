@@ -45,8 +45,8 @@ export default function App() {
   }
 
   return (
-    <div className="h-svh w-full flex overflow-hidden bg-[#020501]">
-      <div className="flex-1">
+    <div className="h-svh w-full grid grid-cols-[1fr_auto_1fr] overflow-hidden bg-[#020501]">
+      <div className="">
       </div>
       <div className="relative h-full inline-block overflow-hidden">
         <video
