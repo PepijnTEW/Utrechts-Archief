@@ -52,13 +52,23 @@ class InfoPoint
         $query = "INSERT INTO {$this->table} (time, title, description, ambient_path, voice_path, img_path) VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $this->conn->prepare($query);
 
-
-
         if (!$stmt) {
             return false;
         }
 
-        $stmt->bind_param('ssssss', $data['time'], $data['title'], $data['description'], $data['ambient_path'], $data['voice_path'], $data['img_path']);
+        $ambientPath = $data['ambient_path'] ?? null;
+        $voicePath = $data['voice_path'] ?? null;
+        $imgPath = $data['img_path'] ?? null;
+
+        $stmt->bind_param(
+            'ssssss',
+            $data['time'],
+            $data['title'],
+            $data['description'],
+            $ambientPath,
+            $voicePath,
+            $imgPath
+        );
         return $stmt->execute();
     }
     public function update(int $id, array $data): bool
@@ -70,7 +80,20 @@ class InfoPoint
             return false;
         }
 
-        $stmt->bind_param('ssssssi', $data['time'], $data['title'], $data['description'], $data['ambient_path'], $data['voice_path'], $data['img_path'], $id);
+        $ambientPath = $data['ambient_path'] ?? null;
+        $voicePath = $data['voice_path'] ?? null;
+        $imgPath = $data['img_path'] ?? null;
+
+        $stmt->bind_param(
+            'ssssssi',
+            $data['time'],
+            $data['title'],
+            $data['description'],
+            $ambientPath,
+            $voicePath,
+            $imgPath,
+            $id
+        );
         return $stmt->execute();
     }
     public function delete(int $id): bool
@@ -84,5 +107,10 @@ class InfoPoint
 
         $stmt->bind_param('i', $id);
         return $stmt->execute();
+    }
+
+    public function destroy(): void
+    {
+        $this->conn->close();
     }
 }
