@@ -45,8 +45,8 @@ export default function App() {
   }
 
   return (
-    <div className="h-svh w-full flex overflow-hidden bg-[#020501]">
-      <div className="flex-1">
+    <div className="h-svh w-full grid grid-cols-[1fr_auto_1fr] overflow-hidden bg-[#020501]">
+      <div className="">
       </div>
       <div className="relative h-full inline-block overflow-hidden">
         <video
@@ -63,7 +63,7 @@ export default function App() {
           <source src={GrachtVideo} type="video/mp4"/>
         </video>
         <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-center p-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 rounded-4xl bg-black/20 p-2 shadow-2xl backdrop-blur-md">
             <TimelineBtn direction="back" onClick={() => handleButtonPress("back")}/>
             <PlayPauseBtn status={status} onToggle={() => handleButtonPress("play")}/>
             <TimelineBtn direction="forward" onClick={() => handleButtonPress("forward")}/>
