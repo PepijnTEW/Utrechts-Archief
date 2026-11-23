@@ -12,26 +12,27 @@ export default function App() {
   const [status, setStatus] = useState<PlaybackStatus>("play");
   const [percentage, setPercentage] = useState<number>(0);
 
-  const video = videoRef.current;
-
   const handleButtonPress = (btnType: BtnType) => {
+    const video = videoRef.current;
     if (!video) return;
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
 
-    timeoutRef.current = setTimeout(() => {
-      timeoutRef.current = null;
       if (btnType === "forward"){
         video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 10);
+        getPercentage(video);
       } else if (btnType === "back"){
         video.currentTime = Math.max(0, video.currentTime - 10);
+        getPercentage(video);
       } else if (video.paused) {
-        void video.play().catch(() => setStatus("pause"));
+        void video.play()
+          .then(() => setStatus("play"))
+          .catch(() => setStatus("pause"));
       } else {
         video.pause();
+        setStatus("pause");
       }
-    }, 300);
   }
 
   const getPercentage = (currentVideo: HTMLVideoElement) => {

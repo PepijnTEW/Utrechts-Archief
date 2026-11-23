@@ -15,7 +15,7 @@ export default function PlayPauseBtn({status, onToggle}: PlayPauseBtnProps) {
 
     return (
         <button
-            className="flex h-16 w-16 touch-manipulation items-center justify-center rounded-full border-3 border-btn-border bg-white/95 text-slate-950 shadow-[0_8px_24px_rgba(0,0,0,0.24)] ring-1 ring-black/10 backdrop-blur-sm transition duration-200 active:bg-amber-300 active:scale-95"
+            className="flex h-16 w-16 cursor-pointer touch-manipulation items-center justify-center rounded-full bg-white/95 text-slate-950 shadow-[0_8px_24px_rgba(0,0,0,0.24)] ring-1 ring-black/10 backdrop-blur-sm transition duration-200 active:bg-amber-300 active:scale-95"
             onClick={onToggle}
             type="button"
             aria-label={isPlaying ? "Pause video" : "Play video"}

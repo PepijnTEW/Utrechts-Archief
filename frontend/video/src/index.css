@@ -1,4 +1,26 @@
 @import "tailwindcss";
+
+@font-face {
+  font-family: "Switzer";
+  src: url("./assets/fonts/switzer/Switzer-Variable.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Switzer";
+  src: url("./assets/fonts/switzer/Switzer-VariableItalic.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 @theme {
-    --color-btn-border: rgba(1, 0, 68, 0.5)
+  --color-btn-border: rgba(1, 0, 68, 0.5);
+  --font-switzer: "Switzer", sans-serif;
+}
+
+body {
+  font-family: var(--font-switzer);
 }
