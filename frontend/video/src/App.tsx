@@ -20,18 +20,18 @@ export default function App() {
       clearTimeout(timeoutRef.current);
     }
 
-    timeoutRef.current = setTimeout(() => {
-      timeoutRef.current = null;
       if (btnType === "forward"){
         video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 10);
+        console.log("forward");
       } else if (btnType === "back"){
         video.currentTime = Math.max(0, video.currentTime - 10);
+        console.log("back");
       } else if (video.paused) {
         void video.play().catch(() => setStatus("pause"));
+        console.log("pause");
       } else {
         video.pause();
       }
-    }, 300);
   }
 
   const getPercentage = (currentVideo: HTMLVideoElement) => {
