@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import PlayPauseBtn, { type PlaybackStatus } from "./components/PlayPauseBtn";
 import TimelineBtn from "./components/TimelineBtn";
 import ProgressBar from "./components/ProgressBar";
+import Logo from "./components/Logo";
 import GrachtVideo from "./assets/gracht.mp4"
 
 type BtnType = "back" | "play" | "forward";
@@ -12,26 +13,27 @@ export default function App() {
   const [status, setStatus] = useState<PlaybackStatus>("play");
   const [percentage, setPercentage] = useState<number>(0);
 
-  const video = videoRef.current;
-
   const handleButtonPress = (btnType: BtnType) => {
+    const video = videoRef.current;
     if (!video) return;
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
 
-    timeoutRef.current = setTimeout(() => {
-      timeoutRef.current = null;
       if (btnType === "forward"){
         video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 10);
+        getPercentage(video);
       } else if (btnType === "back"){
         video.currentTime = Math.max(0, video.currentTime - 10);
+        getPercentage(video);
       } else if (video.paused) {
-        void video.play().catch(() => setStatus("pause"));
+        void video.play()
+          .then(() => setStatus("play"))
+          .catch(() => setStatus("pause"));
       } else {
         video.pause();
+        setStatus("pause");
       }
-    }, 300);
   }
 
   const getPercentage = (currentVideo: HTMLVideoElement) => {
@@ -47,6 +49,7 @@ export default function App() {
   return (
     <div className="h-svh w-full grid grid-cols-[1fr_auto_1fr] overflow-hidden bg-[#020501]">
       <div className="">
+        <Logo/>
       </div>
       <div className="relative h-full inline-block overflow-hidden">
         <video
