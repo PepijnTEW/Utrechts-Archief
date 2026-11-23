@@ -9,7 +9,7 @@ export default function Logo() {
 
     return (
       <div
-        className="box-border flex size-50 aspect-square flex-none flex-col justify-between overflow-hidden bg-black text-white font-sans text-[25px] font-bold italic leading-none tracking-[0.5px]"
+        className="box-border flex size-36 aspect-square flex-none flex-col justify-between overflow-hidden bg-black p-1 text-white font-sans text-[16px] font-bold italic leading-none tracking-[0.5px] sm:size-44 sm:p-2 sm:text-[20px]"
         aria-label="Het Utrechts Archief"
       >
         {ROWS.map((line, rowsIndex) => (
