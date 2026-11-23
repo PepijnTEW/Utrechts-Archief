@@ -48,7 +48,7 @@ export default function App() {
 
   return (
     <div className="h-svh w-full grid grid-cols-[1fr_auto_1fr] overflow-hidden bg-[#020501]">
-      <div className="">
+      <div className="flex justify-center p-16">
         <Logo/>
       </div>
       <div className="relative h-full inline-block overflow-hidden">
