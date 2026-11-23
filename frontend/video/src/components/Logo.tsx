@@ -12,7 +12,7 @@ export default function Logo() {
             {rows.map((line, rowIndex) =>
                 <div
                     key={rowIndex}
-                    className="flex h-[1em] leading-[1]"
+                    className="flex h-[1em]"
                 >
                     {line.split("").map((char, charIndex) =>
                         <span
