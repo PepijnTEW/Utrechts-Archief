@@ -1,0 +1,51 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /var/www/html
+    command: php -S 0.0.0.0:8000 -t .
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      - .:/var/www/html
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-utrechts_archief}
+      DB_USERNAME: ${DB_USERNAME:-utrechts}
+      DB_PASSWORD: ${DB_PASSWORD:-utrechts}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-utrechts_archief}
+      MYSQL_USER: ${DB_USERNAME:-utrechts}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-utrechts}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - "-h"
+        - localhost
+        - "-u"
+        - root
+        - "-p$${MYSQL_ROOT_PASSWORD}"
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mysql_data:
