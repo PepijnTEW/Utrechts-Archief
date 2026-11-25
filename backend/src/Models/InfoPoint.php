@@ -55,7 +55,7 @@ class InfoPoint
     }
     public function create(array $data): bool
     {
-        $query = "INSERT INTO {$this->table} (time, title, description, ambient_path, voice_path) VALUES (?, ?, ?, ?, ?)";
+        $query = "INSERT INTO {$this->table} (time, title, description, ambient_path, voice_path, active) VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $this->conn->prepare($query);
 
         if (!$stmt) {
@@ -64,14 +64,16 @@ class InfoPoint
 
         $ambientPath = $data['ambient_path'] ?? null;
         $voicePath = $data['voice_path'] ?? null;
+        $active = (int) ($data['active'] ?? true);
 
         $stmt->bind_param(
-            'sssss',
+            'sssssi',
             $data['time'],
             $data['title'],
             $data['description'],
             $ambientPath,
-            $voicePath
+            $voicePath,
+            $active
         );
 
         if (!$stmt->execute()) {
@@ -82,7 +84,7 @@ class InfoPoint
     }
     public function update(int $id, array $data): bool
     {
-        $query = "UPDATE {$this->table} SET time = ?, title = ?, description = ?, ambient_path = ?, voice_path = ? WHERE id = ?";
+        $query = "UPDATE {$this->table} SET time = ?, title = ?, description = ?, ambient_path = ?, voice_path = ?, active = COALESCE(?, active) WHERE id = ?";
         $stmt = $this->conn->prepare($query);
 
         if (!$stmt) {
@@ -91,14 +93,16 @@ class InfoPoint
 
         $ambientPath = $data['ambient_path'] ?? null;
         $voicePath = $data['voice_path'] ?? null;
+        $active = array_key_exists('active', $data) ? (int) $data['active'] : null;
 
         $stmt->bind_param(
-            'sssssi',
+            'sssssii',
             $data['time'],
             $data['title'],
             $data['description'],
             $ambientPath,
             $voicePath,
+            $active,
             $id
         );
 
@@ -132,6 +136,8 @@ class InfoPoint
 
     private function withImages(array $infoPoint): array
     {
+        $infoPoint['active'] = (bool) $infoPoint['active'];
+
         $query = 'SELECT id, image_path FROM info_images WHERE info_point_id = ? ORDER BY id ASC';
         $stmt = $this->conn->prepare($query);
 
