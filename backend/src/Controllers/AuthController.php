@@ -23,7 +23,7 @@ class AuthController
             return false;
         }
     }
-    public function generate_jwt()
+    public function generate_jwt(): string
     {
         $payload = array(
             'iss' => 'Utrechts_Archief',
@@ -31,6 +31,6 @@ class AuthController
             'exp' => strtotime("+1 hour")
         );
         $jwt = JWT::encode($payload, $this->secret_key, 'HS256');
-        echo $jwt;
+        return $jwt;
     }
 }

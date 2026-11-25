@@ -4,6 +4,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../src/Config/database.php';
 
 require_once __DIR__ . '/../src/Controllers/AuthController.php';
+require_once __DIR__ . '/../src/Middleware/AuthMiddleware.php';
 
 use App\Models\InfoPoint;
 use App\Controllers\InfoPointController;
@@ -19,21 +20,29 @@ $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 if ($method === 'POST' && $path === '/login') {
     header('Content-Type: application/json');
     $data = json_decode(file_get_contents('php://input'), true);
-    // $username = $data['username'] ?? '';
-    // $password = $data['password'] ?? '';
-    $username = 'Admin';
-    $password = 'rYcQ13uhELhNMdP0uTu7';
+    $username = $data['username'] ?? '';
+    $password = $data['password'] ?? '';
 
     $authController = new AuthController($username, $password);
 
     if ($authController->authenticate($username, $password)) {
-        $authController->generate_jwt();
+        echo json_encode(['token' => $authController->generate_jwt()]);
     } else {
         http_response_code(401);
         echo json_encode(['error' => 'Invalid credentials']);
     }
     exit;
 }
+
+$isInfoPointRoute =
+    ($path === '/info-points' && $method === 'POST')
+    || (preg_match('#^/info-points/[0-9]+$#', (string) $path) === 1
+        && in_array($method, ['PUT', 'DELETE'], true));
+
+if ($isInfoPointRoute) {
+    AuthMiddleware::check_auth();
+}
+
 //info-points path
 if ($method === 'GET' && $path === '/info-points') {
     $infoPointController->index();
