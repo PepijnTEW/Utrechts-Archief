@@ -1,5 +1,26 @@
+import { useState } from "react";
+import Login from "./components/Login";
+import Header from "./components/Header";
+import "./css/app.css";
 export default function App() {
+  const [isSignedIn, setIsSignedIn] = useState(
+    () => sessionStorage.getItem("cmsToken") !== null,
+  );
+
+  function handleLogout() {
+    sessionStorage.removeItem("cmsToken");
+    setIsSignedIn(false);
+  }
+
   return (
-    <p>Hello World</p>
+    <main className="min-h-screen bg-[#f4f4f4] font-sans">
+      <Header isSignedIn={isSignedIn} onLogout={handleLogout} />
+      <div className="flex h-screen items-center justify-center -translate-y-[100px]">
+        {!isSignedIn && (
+          <Login onLoginSuccess={() => setIsSignedIn(true)} />
+        )}
+        {isSignedIn && <div>You're signed in</div>}
+      </div>
+    </main>
   );
 }
