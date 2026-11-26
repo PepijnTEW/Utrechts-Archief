@@ -37,7 +37,7 @@ if ($method === 'POST' && $path === '/login') {
 $isInfoPointRoute =
     ($path === '/info-points' && $method === 'POST')
     || (preg_match('#^/info-points/[0-9]+$#', (string) $path) === 1
-        && in_array($method, ['PUT', 'DELETE'], true));
+        && in_array($method, ['POST', 'PUT', 'DELETE'], true));
 
 if ($isInfoPointRoute) {
     AuthMiddleware::check_auth();
@@ -51,6 +51,8 @@ if ($method === 'GET' && $path === '/info-points') {
 } elseif ($method === 'POST' && $path === '/info-points') {
     $infoPointController->store();
 } elseif ($method === 'PUT' && preg_match('#^/info-points/([0-9]+)$#', $path, $matches)) {
+    $infoPointController->update((int) $matches[1]);
+} elseif ($method === 'POST' && preg_match('#^/info-points/([0-9]+)$#', $path, $matches)) {
     $infoPointController->update((int) $matches[1]);
 } elseif ($method === 'DELETE' && preg_match('#^/info-points/([0-9]+)$#', $path, $matches)) {
     $infoPointController->destroy((int) $matches[1]);

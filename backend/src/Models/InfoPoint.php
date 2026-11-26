@@ -53,68 +53,105 @@ class InfoPoint
 
         return $row ? $this->withImages($row) : null;
     }
-    public function create(array $data): bool
+    public function create(array $data): int|false
     {
-        $query = "INSERT INTO {$this->table} (time, title, description, ambient_path, voice_path, active) VALUES (?, ?, ?, ?, ?, ?)";
-        $stmt = $this->conn->prepare($query);
-
-        if (!$stmt) {
+        if (!$this->conn->begin_transaction()) {
             return false;
         }
 
-        $ambientPath = $data['ambient_path'] ?? null;
-        $voicePath = $data['voice_path'] ?? null;
-        $active = (int) ($data['active'] ?? true);
+        try {
+            $query = "INSERT INTO {$this->table} (time, title, description, ambient_path, voice_path, active) VALUES (?, ?, ?, ?, ?, ?)";
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                $this->conn->rollback();
+                return false;
+            }
 
-        $stmt->bind_param(
-            'sssssi',
-            $data['time'],
-            $data['title'],
-            $data['description'],
-            $ambientPath,
-            $voicePath,
-            $active
-        );
+            $ambientPath = $data['ambient_path'] ?? null;
+            $voicePath = $data['voice_path'] ?? null;
+            $active = (int) ($data['active'] ?? true);
 
-        if (!$stmt->execute()) {
-            return false;
+            $stmt->bind_param(
+                'sssssi',
+                $data['time'],
+                $data['title'],
+                $data['description'],
+                $ambientPath,
+                $voicePath,
+                $active
+            );
+
+            if (!$stmt->execute()) {
+                $this->conn->rollback();
+                return false;
+            }
+
+            $id = (int) $this->conn->insert_id;
+            if (!$this->replaceImages($id, $data['images'] ?? [])) {
+                $this->conn->rollback();
+                return false;
+            }
+
+            if (!$this->conn->commit()) {
+                $this->conn->rollback();
+                return false;
+            }
+
+            return $id;
+        } catch (\mysqli_sql_exception $exception) {
+            $this->conn->rollback();
+            throw $exception;
         }
-
-        return $this->replaceImages((int) $this->conn->insert_id, $data['images'] ?? []);
     }
     public function update(int $id, array $data): bool
     {
-        $query = "UPDATE {$this->table} SET time = ?, title = ?, description = ?, ambient_path = ?, voice_path = ?, active = COALESCE(?, active) WHERE id = ?";
-        $stmt = $this->conn->prepare($query);
-
-        if (!$stmt) {
+        if (!$this->conn->begin_transaction()) {
             return false;
         }
 
-        $ambientPath = $data['ambient_path'] ?? null;
-        $voicePath = $data['voice_path'] ?? null;
-        $active = array_key_exists('active', $data) ? (int) $data['active'] : null;
+        try {
+            $query = "UPDATE {$this->table} SET time = ?, title = ?, description = ?, ambient_path = ?, voice_path = ?, active = COALESCE(?, active) WHERE id = ?";
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                $this->conn->rollback();
+                return false;
+            }
 
-        $stmt->bind_param(
-            'sssssii',
-            $data['time'],
-            $data['title'],
-            $data['description'],
-            $ambientPath,
-            $voicePath,
-            $active,
-            $id
-        );
+            $ambientPath = $data['ambient_path'] ?? null;
+            $voicePath = $data['voice_path'] ?? null;
+            $active = array_key_exists('active', $data) ? (int) $data['active'] : null;
 
-        if (!$stmt->execute()) {
-            return false;
+            $stmt->bind_param(
+                'sssssii',
+                $data['time'],
+                $data['title'],
+                $data['description'],
+                $ambientPath,
+                $voicePath,
+                $active,
+                $id
+            );
+
+            if (!$stmt->execute()) {
+                $this->conn->rollback();
+                return false;
+            }
+
+            if (array_key_exists('images', $data) && !$this->replaceImages($id, $data['images'])) {
+                $this->conn->rollback();
+                return false;
+            }
+
+            if (!$this->conn->commit()) {
+                $this->conn->rollback();
+                return false;
+            }
+
+            return true;
+        } catch (\mysqli_sql_exception $exception) {
+            $this->conn->rollback();
+            throw $exception;
         }
-
-        if (array_key_exists('images', $data)) {
-            return $this->replaceImages($id, $data['images']);
-        }
-
-        return true;
     }
     public function delete(int $id): bool
     {

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import InfoPointTable from "./components/InfoPointTable";
 import Login from "./components/Login";
 import Header from "./components/Header";
 import "./css/app.css";
@@ -15,12 +16,16 @@ export default function App() {
   return (
     <main className="min-h-screen bg-[#f4f4f4] font-sans">
       <Header isSignedIn={isSignedIn} onLogout={handleLogout} />
-      <div className="flex h-screen items-center justify-center -translate-y-[100px]">
-        {!isSignedIn && (
+      {!isSignedIn && (
+        <div className="flex h-screen items-center justify-center -translate-y-[100px]">
           <Login onLoginSuccess={() => setIsSignedIn(true)} />
-        )}
-        {isSignedIn && <div>You're signed in</div>}
-      </div>
+        </div>
+      )}
+      {isSignedIn && (
+        <div className="px-4 pb-12 pt-20 sm:px-8">
+          <InfoPointTable token={sessionStorage.getItem("cmsToken") ?? ""} />
+        </div>
+      )}
     </main>
   );
 }

@@ -1,5 +1,7 @@
 FROM php:8.5.10-apache
 
+COPY uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+
 RUN docker-php-ext-install mysqli pdo_mysql
 RUN a2enmod rewrite
 

@@ -11,6 +11,14 @@ export default defineConfig({
         target: "http://localhost:8082",
         changeOrigin: true,
       },
+      "/info-points": {
+        target: "http://localhost:8082",
+        changeOrigin: true,
+      },
+      "/uploads": {
+        target: "http://localhost:8082",
+        changeOrigin: true,
+      },
     },
   },
 })

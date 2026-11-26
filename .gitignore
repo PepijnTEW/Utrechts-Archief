@@ -1,5 +1,7 @@
 /vendor/
 /backend/vendor/
+/backend/public/uploads/audio/
+/backend/public/uploads/images/
 node_modules/
 npm-debug.log
 yarn-error.log
