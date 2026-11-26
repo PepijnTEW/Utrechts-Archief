@@ -24,3 +24,26 @@
 body {
   font-family: var(--font-switzer);
 }
+
+.info-card-enter {
+  transform-origin: right center;
+  animation: info-card-pop 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes info-card-pop {
+  from {
+    opacity: 0;
+    scale: 0.94;
+  }
+
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .info-card-enter {
+    animation: none;
+  }
+}
