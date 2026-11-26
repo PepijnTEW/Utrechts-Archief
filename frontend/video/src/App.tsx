@@ -4,13 +4,10 @@ import TimelineBtn from "./components/TimelineBtn";
 import ProgressBar from "./components/ProgressBar";
 import Logo from "./components/Logo";
 import GrachtVideo from "./assets/gracht.mp4"
+import PopupSound from "./assets/audio/popup.mp3";
+import type { InfoPointData } from "./components/InfoPoint";
 
 type BtnType = "back" | "play" | "forward";
-
-interface InfoPointData {
-  time: number;
-  label: string;
-}
 
 function isInfoPointData(value: unknown): value is InfoPointData[] {
   return Array.isArray(value) && value.every(
@@ -22,17 +19,22 @@ function isInfoPointData(value: unknown): value is InfoPointData[] {
       Number.isFinite(point.time) &&
       point.time >= 0 &&
       "label" in point &&
-      typeof point.label === "string",
+      typeof point.label === "string" &&
+      (!("text" in point) || typeof point.text === "string") &&
+      (!("image" in point) || typeof point.image === "string") &&
+      (!("audio" in point) || typeof point.audio === "string"),
   );
 }
 
 export default function App() {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const popupSoundRef = useRef<HTMLAudioElement>(null);
+  const previousTimeRef = useRef(0);
   const [status, setStatus] = useState<PlaybackStatus>("play");
   const [percentage, setPercentage] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
   const [infoPoints, setInfoPoints] = useState<InfoPointData[]>([]);
+  const [activeInfoPoint, setActiveInfoPoint] = useState<InfoPointData | null>(null);
   const [infoPointsError, setInfoPointsError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -62,24 +64,30 @@ export default function App() {
   const handleButtonPress = (btnType: BtnType) => {
     const video = videoRef.current;
     if (!video) return;
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+    if (btnType === "forward" || btnType === "back") {
+      const sortedInfoPoints = infoPoints
+        .filter(({ time }) => time >= 0 && time <= video.duration)
+        .toSorted((left, right) => left.time - right.time);
+      const target = btnType === "forward"
+        ? sortedInfoPoints.find(({ time }) => time > video.currentTime + 0.1)
+        : sortedInfoPoints.toReversed().find(({ time }) => time < video.currentTime - 0.1);
 
-      if (btnType === "forward"){
-        video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 10);
-        getPercentage(video);
-      } else if (btnType === "back"){
-        video.currentTime = Math.max(0, video.currentTime - 10);
-        getPercentage(video);
-      } else if (video.paused) {
-        void video.play()
-          .then(() => setStatus("play"))
-          .catch(() => setStatus("pause"));
+      if (target) {
+        selectInfoPoint(target);
       } else {
-        video.pause();
-        setStatus("pause");
+        video.currentTime = 0;
+        previousTimeRef.current = 0;
+        getPercentage(video);
+        setActiveInfoPoint(null);
       }
+    } else if (video.paused) {
+      void video.play()
+        .then(() => setStatus("play"))
+        .catch(() => setStatus("pause"));
+    } else {
+      video.pause();
+      setStatus("pause");
+    }
   }
 
   const getPercentage = (currentVideo: HTMLVideoElement) => {
@@ -93,12 +101,39 @@ export default function App() {
     setPercentage(Math.min(100, Math.max(0, progress)));
   }
 
-  const seekToInfoPoint = (time: number) => {
-    const video = videoRef.current;
-    if (!video || !Number.isFinite(video.duration) || time > video.duration) return;
+  const handleTimeUpdate = (currentVideo: HTMLVideoElement) => {
+    const previousTime = previousTimeRef.current;
+    const currentTime = currentVideo.currentTime;
+    previousTimeRef.current = currentTime;
+    getPercentage(currentVideo);
 
-    video.currentTime = time;
+    if (currentVideo.paused || currentTime <= previousTime) return;
+
+    const reachedInfoPoint = infoPoints
+      .toSorted((left, right) => left.time - right.time)
+      .find(({ time }) => time > previousTime && time <= currentTime);
+
+    if (reachedInfoPoint) {
+      const popupSound = popupSoundRef.current;
+      if (popupSound) {
+        popupSound.currentTime = 0;
+        void popupSound.play().catch((error: unknown) => {
+          console.error("Could not play info point sound.", error);
+        });
+      }
+      selectInfoPoint(reachedInfoPoint);
+    }
+  };
+
+  const selectInfoPoint = (point: InfoPointData) => {
+    const video = videoRef.current;
+    if (!video || !Number.isFinite(video.duration) || point.time > video.duration) return;
+
+    video.currentTime = point.time;
+    previousTimeRef.current = point.time;
     getPercentage(video);
+    video.pause();
+    setActiveInfoPoint(point);
   };
 
   return (
@@ -107,6 +142,7 @@ export default function App() {
         <Logo/>
       </div>
       <div className="relative h-full inline-block overflow-hidden">
+        <audio ref={popupSoundRef} src={PopupSound} preload="auto" />
         <video
           ref={videoRef}
           className="block h-full"
@@ -114,15 +150,22 @@ export default function App() {
           autoPlay
           muted
           playsInline
-          onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
-          onTimeUpdate={(event) => getPercentage(event.currentTarget)}
-          onPlay={() => setStatus("play")}
+          onLoadedMetadata={(event) => {
+            setDuration(event.currentTarget.duration);
+            previousTimeRef.current = event.currentTarget.currentTime;
+          }}
+          onTimeUpdate={(event) => handleTimeUpdate(event.currentTarget)}
+          onPlay={() => {
+            setStatus("play");
+            previousTimeRef.current = videoRef.current?.currentTime ?? 0;
+            setActiveInfoPoint(null);
+          }}
           onPause={() => setStatus("pause")}
         >
           <source src={GrachtVideo} type="video/mp4"/>
         </video>
-        <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-center p-4">
-          <div className="flex items-center gap-2 rounded-4xl bg-black/20 p-2 shadow-2xl backdrop-blur-md">
+        <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-center p-6">
+          <div className="flex items-center gap-3 rounded-full bg-black/55 p-3 shadow-2xl backdrop-blur-md">
             <TimelineBtn direction="back" onClick={() => handleButtonPress("back")}/>
             <PlayPauseBtn status={status} onToggle={() => handleButtonPress("play")}/>
             <TimelineBtn direction="forward" onClick={() => handleButtonPress("forward")}/>
@@ -133,10 +176,12 @@ export default function App() {
         procentage={percentage}
         duration={duration}
         infoPoints={infoPoints}
-        onInfoPointSelect={seekToInfoPoint}
+        activeInfoPoint={activeInfoPoint}
+        onInfoPointSelect={selectInfoPoint}
+        onInfoCardClose={() => setActiveInfoPoint(null)}
       />
       {infoPointsError && (
-        <p className="absolute bottom-2 right-2 text-sm text-red-300" role="alert">
+        <p className="absolute bottom-4 right-4 text-lg font-semibold text-red-800" role="alert">
           {infoPointsError}
         </p>
       )}

@@ -1,21 +1,34 @@
-interface InfoPointProps {
+import type { RefObject } from "react";
+
+export interface InfoPointData {
     time: number;
-    duration: number;
     label: string;
-    onSelect: (time: number) => void;
+    text?: string;
+    image?: string;
+    audio?: string;
 }
 
-export default function InfoPoint({ time, duration, label, onSelect }: InfoPointProps) {
-    const position = (time / duration) * 100;
+interface InfoPointProps {
+    point: InfoPointData;
+    duration: number;
+    isOpen: boolean;
+    onSelect: (point: InfoPointData) => void;
+    buttonRef?: RefObject<HTMLButtonElement | null>;
+}
+
+export default function InfoPoint({ point, duration, isOpen, onSelect, buttonRef }: InfoPointProps) {
+    const position = (point.time / duration) * 100;
 
     return (
         <button
+            ref={buttonRef}
             type="button"
-            className="absolute left-1/2 z-10 size-3 -translate-x-1/2 translate-y-1/2 rounded-full border-2 border-white bg-amber-300 hover:scale-125 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            className="absolute left-1/2 z-10 size-9 -translate-x-1/2 translate-y-1/2 touch-manipulation rounded-full border-4 border-white bg-amber-500 shadow-[0_2px_8px_rgba(15,23,42,0.35)] transition-transform duration-200 hover:scale-125 active:scale-90 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-slate-900 motion-reduce:transition-none"
             style={{ bottom: `${position}%` }}
-            aria-label={`Jump to ${label} at ${time} seconds`}
-            title={label}
-            onClick={() => onSelect(time)}
+            aria-label={`Open ${point.label} at ${point.time} seconds`}
+            aria-expanded={isOpen}
+            title={point.label}
+            onClick={() => onSelect(point)}
         />
     );
 }

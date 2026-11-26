@@ -1,14 +1,17 @@
 [
   {
     "time": 30,
-    "label": "Info point 1"
+    "label": "Info point 1",
+    "text": "Add the information for this moment in the video here."
   },
   {
     "time": 90,
-    "label": "Info point 2"
+    "label": "Info point 2",
+    "text": "This card can also include an image or an audio file."
   },
   {
     "time": 150,
-    "label": "Info point 3"
+    "label": "Info point 3",
+    "text": "Use the image and audio fields in info-points.json to add media."
   }
 ]
