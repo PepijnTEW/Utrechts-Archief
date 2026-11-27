@@ -88,8 +88,10 @@ export default function InfoPointTable({ token }: { token: string }) {
   const [infoPoints, setInfoPoints] = useState<InfoPoint[]>([]);
   const [draft, setDraft] = useState<InfoPoint | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [closingEditorIds, setClosingEditorIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [updatingActiveId, setUpdatingActiveId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const loadInfoPoints = useCallback(async () => {
@@ -152,8 +154,60 @@ export default function InfoPointTable({ token }: { token: string }) {
 
   function startCreating() {
     setError(null);
+    if (expandedId !== null) {
+      startClosingEditor(expandedId);
+    }
     setDraft(createDraft());
     setExpandedId(0);
+    setClosingEditorIds((currentIds) => currentIds.filter((id) => id !== 0));
+  }
+
+  function startClosingEditor(id: number) {
+    setClosingEditorIds((currentIds) =>
+      currentIds.includes(id) ? currentIds : [...currentIds, id],
+    );
+  }
+
+  async function updateActive(infoPoint: InfoPoint, active: boolean) {
+    if (infoPoint.id === 0) {
+      updateInfoPoint({ ...infoPoint, active });
+      return;
+    }
+
+    setUpdatingActiveId(infoPoint.id);
+    setError(null);
+
+    try {
+      if (!token) {
+        throw new Error("Je sessie ontbreekt. Log opnieuw in.");
+      }
+
+      const response = await fetch(`/info-points/${infoPoint.id}/active`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ active }),
+      });
+      const payload: unknown = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseError(payload, "De actieve status kon niet worden bijgewerkt."));
+      }
+
+      setInfoPoints((currentInfoPoints) =>
+        currentInfoPoints.map((currentInfoPoint) =>
+          currentInfoPoint.id === infoPoint.id
+            ? { ...currentInfoPoint, active }
+            : currentInfoPoint,
+        ),
+      );
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : "De actieve status kon niet worden bijgewerkt.");
+    } finally {
+      setUpdatingActiveId(null);
+    }
   }
 
   async function saveInfoPoint(updatedInfoPoint: InfoPoint) {
@@ -206,7 +260,10 @@ export default function InfoPointTable({ token }: { token: string }) {
       }
 
       setDraft(null);
-      setExpandedId(null);
+      if (updatedInfoPoint.id !== 0) {
+        startClosingEditor(updatedInfoPoint.id);
+      }
+      setExpandedId((currentId) => currentId === updatedInfoPoint.id ? null : currentId);
       try {
         await loadInfoPoints();
         releaseImagePreviews(updatedInfoPoint);
@@ -227,6 +284,7 @@ export default function InfoPointTable({ token }: { token: string }) {
       }
       setDraft(null);
       setExpandedId(null);
+      setClosingEditorIds((currentIds) => currentIds.filter((closingId) => closingId !== 0));
       return;
     }
 
@@ -250,7 +308,8 @@ export default function InfoPointTable({ token }: { token: string }) {
         releaseImagePreviews(deletedInfoPoint);
       }
       setInfoPoints((currentInfoPoints) => currentInfoPoints.filter((infoPoint) => infoPoint.id !== id));
-      setExpandedId(null);
+      setClosingEditorIds((currentIds) => currentIds.filter((closingId) => closingId !== id));
+      setExpandedId((currentId) => currentId === id ? null : currentId);
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : "Het informatiepunt kon niet worden verwijderd.");
     }
@@ -277,24 +336,27 @@ export default function InfoPointTable({ token }: { token: string }) {
       )}
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[32rem] border-collapse text-sm">
+        <table className="w-full min-w-[36rem] border-collapse text-sm">
           <thead className="bg-[#008899] text-white">
             <tr>
               <th scope="col" className="w-20 px-4 py-3 text-center font-semibold">ID</th>
               <th scope="col" className="px-4 py-3 text-left font-semibold">Titel</th>
               <th scope="col" className="w-36 px-4 py-3 text-center font-semibold">Tijdstip</th>
+              <th scope="col" className="w-24 px-3 py-3 text-center font-semibold">Actief</th>
               <th scope="col" className="w-16 px-3 py-3" aria-label="Bewerken" />
             </tr>
           </thead>
           <tbody>
             {isLoading && (
-              <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-600">Laden...</td></tr>
+              <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-600">Laden...</td></tr>
             )}
             {!isLoading && rows.length === 0 && (
-              <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-600">Geen informatiepunten gevonden.</td></tr>
+              <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-600">Geen informatiepunten gevonden.</td></tr>
             )}
             {!isLoading && rows.map((infoPoint, index) => {
               const isExpanded = expandedId === infoPoint.id;
+              const isClosing = closingEditorIds.includes(infoPoint.id);
+              const isEditorRendered = isExpanded || isClosing;
               const editorId = `info-point-editor-${infoPoint.id}`;
 
               return (
@@ -303,30 +365,68 @@ export default function InfoPointTable({ token }: { token: string }) {
                     <td className="px-4 py-2 text-center text-slate-800">{infoPoint.id || "Nieuw"}</td>
                     <td className="px-4 py-2 text-slate-800">{infoPoint.title || "—"}</td>
                     <td className="px-4 py-2 text-center text-slate-800">{infoPoint.time || "—"}</td>
+                    <td className="px-3 py-2 text-center">
+                      <input
+                        type="checkbox"
+                        checked={infoPoint.active}
+                        disabled={isSaving || updatingActiveId !== null}
+                        aria-label={`Actief: ${infoPoint.title || `informatiepunt ${infoPoint.id || "nieuw"}`}`}
+                        onChange={(event) => void updateActive(infoPoint, event.currentTarget.checked)}
+                        className="h-4 w-4 cursor-pointer accent-[#008899] disabled:cursor-not-allowed"
+                      />
+                    </td>
                     <td className="px-3 py-1 text-center">
                       <button
                         type="button"
                         aria-label={`${isExpanded ? "Sluit" : "Bewerk"} informatiepunt ${infoPoint.id || "nieuw"}`}
                         aria-expanded={isExpanded}
                         aria-controls={editorId}
-                        onClick={() => setExpandedId(isExpanded ? null : infoPoint.id)}
+                        onClick={() => {
+                          if (isExpanded) {
+                            setExpandedId(null);
+                            startClosingEditor(infoPoint.id);
+                          } else {
+                            if (expandedId !== null) {
+                              startClosingEditor(expandedId);
+                            }
+                            setClosingEditorIds((currentIds) =>
+                              currentIds.filter((id) => id !== infoPoint.id),
+                            );
+                            setExpandedId(infoPoint.id);
+                          }
+                        }}
                         className="inline-flex cursor-pointer rounded p-1 text-slate-700 hover:bg-[#f2e8d2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#008899]"
                       >
                         <img src={pencilIcon} alt="" className="h-5 w-5" />
                       </button>
                     </td>
                   </tr>
-                  {isExpanded && (
+                  {isEditorRendered && (
                     <tr className="border-b border-[#008899]/30">
-                      <td id={editorId} colSpan={4} className="p-0">
-                        <InfoPointEditor
-                          infoPoint={infoPoint}
-                          isSaving={isSaving}
-                          error={error}
-                          onUpdate={updateInfoPoint}
-                          onSave={(updatedInfoPoint) => void saveInfoPoint(updatedInfoPoint)}
-                          onDelete={() => void deleteInfoPoint(infoPoint.id)}
-                        />
+                      <td id={editorId} colSpan={5} className="p-0">
+                        <div
+                          className={isClosing ? "info-point-editor-collapse" : "info-point-editor-expand"}
+                          aria-hidden={isClosing}
+                          onAnimationEnd={(event) => {
+                            if (event.target !== event.currentTarget || !isClosing) {
+                              return;
+                            }
+                            setClosingEditorIds((currentIds) =>
+                              currentIds.filter((id) => id !== infoPoint.id),
+                            );
+                          }}
+                        >
+                          <div className="min-h-0 overflow-hidden">
+                            <InfoPointEditor
+                              infoPoint={infoPoint}
+                              isSaving={isSaving || updatingActiveId !== null}
+                              error={error}
+                              onUpdate={updateInfoPoint}
+                              onSave={(updatedInfoPoint) => void saveInfoPoint(updatedInfoPoint)}
+                              onDelete={() => void deleteInfoPoint(infoPoint.id)}
+                            />
+                          </div>
+                        </div>
                       </td>
                     </tr>
                   )}

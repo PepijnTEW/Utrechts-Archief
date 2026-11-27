@@ -3,3 +3,45 @@
 :root {
   --font-sans: Arial, Helvetica, sans-serif;
 }
+
+@keyframes info-point-editor-expand {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+  to {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+
+@keyframes info-point-editor-collapse {
+  from {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+  to {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
+.info-point-editor-expand,
+.info-point-editor-collapse {
+  display: grid;
+}
+
+.info-point-editor-expand {
+  animation: info-point-editor-expand 260ms ease-out both;
+}
+
+.info-point-editor-collapse {
+  animation: info-point-editor-collapse 260ms ease-in both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .info-point-editor-expand,
+  .info-point-editor-collapse {
+    animation-duration: 1ms;
+  }
+}

@@ -140,6 +140,32 @@ class InfoPointController
         }
     }
 
+    public function updateActive(int $id): void
+    {
+        if ($this->infoPointModel->getById($id) === null) {
+            $this->respond(404, ['error' => 'InfoPoint not found']);
+            return;
+        }
+
+        $data = $this->requestData();
+        if (!array_key_exists('active', $data) || !is_bool($data['active'])) {
+            $this->respond(400, ['error' => 'Active must be a boolean.']);
+            return;
+        }
+
+        try {
+            if (!$this->infoPointModel->setActive($id, $data['active'])) {
+                $this->respond(500, ['error' => 'Failed to update InfoPoint status']);
+                return;
+            }
+
+            $this->respond(200, ['message' => 'InfoPoint status updated successfully']);
+        } catch (mysqli_sql_exception $exception) {
+            error_log($exception->getMessage());
+            $this->respond(500, ['error' => 'Failed to update InfoPoint status']);
+        }
+    }
+
     public function destroy(int $id): void
     {
         $infoPoint = $this->infoPointModel->getById($id);

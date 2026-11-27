@@ -153,6 +153,18 @@ class InfoPoint
             throw $exception;
         }
     }
+    public function setActive(int $id, bool $active): bool
+    {
+        $query = "UPDATE {$this->table} SET active = ? WHERE id = ?";
+        $stmt = $this->conn->prepare($query);
+        if (!$stmt) {
+            return false;
+        }
+
+        $activeValue = (int) $active;
+        $stmt->bind_param('ii', $activeValue, $id);
+        return $stmt->execute();
+    }
     public function delete(int $id): bool
     {
         $query = "DELETE FROM {$this->table} WHERE id = ?";
